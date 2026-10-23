@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Header } from '../components/Header';
 import { ResumeUploader } from '../components/ResumeUploader';
 import { ProfileReview } from '../components/ProfileReview';
+import { ProfileSummaryRibbon } from '../components/ProfileSummaryRibbon';
 import { JobList } from '../components/JobList';
 import { SAMPLE_CANDIDATE } from '../data/sample-candidate';
 import demoJobsData from '../data/demo-jobs.json';
@@ -19,12 +20,14 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [scoredJobs, setScoredJobs] = useState<ScoredJob[] | null>(null);
+  const [isProfileCollapsed, setIsProfileCollapsed] = useState(false);
 
   // 1-Click Sample CV load
   const handleLoadSample = () => {
     setIsLoading(true);
     setErrorMessage(null);
     setScoredJobs(null);
+    setIsProfileCollapsed(false);
     setTimeout(() => {
       setCandidateProfile(JSON.parse(JSON.stringify(SAMPLE_CANDIDATE)));
       setActiveFileName('sample-early-career-cv.pdf (Synthetic Profile)');
@@ -52,6 +55,7 @@ export default function Home() {
 
     setIsLoading(true);
     setErrorMessage(null);
+    setIsProfileCollapsed(false);
 
     try {
       const formData = new FormData();
@@ -83,11 +87,14 @@ export default function Home() {
       setScoredJobs(null); // Reset previous match results so candidate reviews new profile
       setIsLoading(false);
     } catch {
-      setErrorMessage('Network or server error while uploading the resume. Please check your connection and try again.');
+      setErrorMessage(
+        'Network or server error while uploading the resume. Please check your connection and try again.'
+      );
       setIsLoading(false);
     }
   };
 
+  // Complete session reset (purges all RAM state)
   const handleResetSession = () => {
     setCandidateProfile(null);
     setActiveFileName(undefined);
@@ -95,8 +102,10 @@ export default function Home() {
     setIsSearching(false);
     setErrorMessage(null);
     setScoredJobs(null);
+    setIsProfileCollapsed(false);
   };
 
+  // Run explainable 50/35/15 match scoring
   const handleFindMatches = () => {
     if (!candidateProfile) return;
     setIsSearching(true);
@@ -105,6 +114,7 @@ export default function Home() {
       const results = scoreAllJobs(candidateProfile, DEMO_JOBS);
       setScoredJobs(results);
       setIsSearching(false);
+      setIsProfileCollapsed(true); // Collapse profile input block post-search
 
       // Smooth scroll to results
       setTimeout(() => {
@@ -116,6 +126,20 @@ export default function Home() {
     }, 350);
   };
 
+  // Reset strict location filter (triggered by EmptyResults "Show all 5 jobs")
+  const handleResetLocationFilter = () => {
+    if (!candidateProfile) return;
+    const updated: CandidateProfile = {
+      ...candidateProfile,
+      preferredLocation: 'Worldwide',
+      strictLocationFilter: false,
+    };
+    setCandidateProfile(updated);
+    if (scoredJobs) {
+      setScoredJobs(scoreAllJobs(updated, DEMO_JOBS));
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header
@@ -124,27 +148,49 @@ export default function Home() {
       />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
-        <ResumeUploader
-          onLoadSample={handleLoadSample}
-          onFileUpload={handleFileUpload}
-          isLoading={isLoading}
-          activeFileName={activeFileName}
-          errorMessage={errorMessage}
-          onClearError={() => setErrorMessage(null)}
-        />
-
-        {candidateProfile && (
-          <ProfileReview
-            profile={candidateProfile}
-            onUpdateProfile={setCandidateProfile}
-            onFindMatches={handleFindMatches}
-            isSearching={isSearching}
-          />
+        {/* Post-search Collapsible Summary Ribbon */}
+        {candidateProfile && scoredJobs && (
+          <section id="summary-section">
+            <ProfileSummaryRibbon
+              profile={candidateProfile}
+              activeFileName={activeFileName}
+              isExpanded={!isProfileCollapsed}
+              onToggleExpand={() => setIsProfileCollapsed((prev) => !prev)}
+            />
+          </section>
         )}
 
+        {/* Input Block: Uploader and Profile Editor (shown initially, or when expanded) */}
+        {(!scoredJobs || !isProfileCollapsed) && (
+          <div className="space-y-8 transition-all">
+            <ResumeUploader
+              onLoadSample={handleLoadSample}
+              onFileUpload={handleFileUpload}
+              isLoading={isLoading}
+              activeFileName={activeFileName}
+              errorMessage={errorMessage}
+              onClearError={() => setErrorMessage(null)}
+            />
+
+            {candidateProfile && (
+              <ProfileReview
+                profile={candidateProfile}
+                onUpdateProfile={setCandidateProfile}
+                onFindMatches={handleFindMatches}
+                isSearching={isSearching}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Vacancy Results Stream */}
         {scoredJobs && (
           <section id="results-section" className="pt-2">
-            <JobList scoredJobs={scoredJobs} />
+            <JobList
+              scoredJobs={scoredJobs}
+              candidateProfile={candidateProfile || undefined}
+              onResetLocationFilter={handleResetLocationFilter}
+            />
           </section>
         )}
       </main>

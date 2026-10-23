@@ -137,6 +137,19 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
               </button>
             ))}
           </div>
+          <div className="pt-1.5">
+            <label className="inline-flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={Boolean(profile.strictLocationFilter)}
+                onChange={(e) =>
+                  onUpdateProfile({ ...profile, strictLocationFilter: e.target.checked })
+                }
+                className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 w-3.5 h-3.5"
+              />
+              <span className="font-medium text-slate-700">Strict location filter</span>
+            </label>
+          </div>
         </div>
       </div>
 

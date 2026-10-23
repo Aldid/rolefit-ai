@@ -39,7 +39,7 @@ Build mode: fast
   Learner check: Upload a custom PDF or DOCX file (or try dropping an invalid file) and verify parsing populates skills or presents the friendly error banner appropriately.
   Commit: `Add in-memory PDF and DOCX parser and upload validation error handling`
 
-- [ ] **4. Collapsible profile ribbon, empty results recovery, and session reset**
+- [x] **4. Collapsible profile ribbon, empty results recovery, and session reset**
   Becomes usable: After running matching, the input block minimizes into a compact summary ribbon with an "Edit Profile" toggle. If strict location filters yield zero matches, a friendly empty state appears with a "Show all 5 jobs" button that resets location and reveals all jobs. Clicking "New Session" purges all in-memory data and returns to the initial state.
   Why now: Polishes the complete end-to-end demo flow, addresses all boundary states, and guarantees complete session privacy.
   PRD ref: `prd.md > The Core Journey` (step 6), `prd.md > Screens and Layout > 2. Resume & Preferences Section (Collapsible)`, `prd.md > States and Boundaries > Empty Filter State`, `prd.md > States and Boundaries > Session Reset State`

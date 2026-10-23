@@ -16,6 +16,7 @@ export interface CandidateProfile {
   targetRole: string;
   preferredFormat: WorkFormat;
   preferredLocation: string;
+  strictLocationFilter?: boolean;
 }
 
 export interface JobListing {

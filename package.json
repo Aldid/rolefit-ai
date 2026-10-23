@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsx tests/testEngine.ts && tsx tests/testParser.ts",
+    "test": "tsx tests/testEngine.ts && tsx tests/testParser.ts && tsx tests/testSlice4.ts",
     "test:engine": "tsx tests/testEngine.ts",
-    "test:parser": "tsx tests/testParser.ts"
+    "test:parser": "tsx tests/testParser.ts",
+    "test:slice4": "tsx tests/testSlice4.ts"
   },
   "dependencies": {
     "lucide-react": "^0.453.0",
