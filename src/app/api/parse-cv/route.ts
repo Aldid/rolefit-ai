@@ -6,15 +6,17 @@ import { extractProfileFromText } from '@/lib/extractProfile';
 
 export const dynamic = 'force-dynamic';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB file size limit (5,242,880 bytes)
+const MAX_MULTIPART_OVERHEAD = 64 * 1024; // 64 KB allowance for multipart boundary and headers
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Fast-fail Content-Length pre-buffer check to prevent buffering oversized payloads into RAM
+    // 1. Fast-fail Content-Length pre-buffer check (including multipart overhead allowance)
+    //    Prevents buffering excessively large requests into RAM while allowing a 5 MB file + envelope
     const contentLengthHeader = req.headers.get('content-length');
     if (contentLengthHeader) {
       const contentLength = parseInt(contentLengthHeader, 10);
-      if (!isNaN(contentLength) && contentLength > MAX_FILE_SIZE) {
+      if (!isNaN(contentLength) && contentLength > MAX_FILE_SIZE + MAX_MULTIPART_OVERHEAD) {
         return NextResponse.json(
           { error: 'File size exceeds the 5 MB limit. Please upload a smaller document.' },
           { status: 413 }
