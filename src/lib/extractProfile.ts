@@ -16,8 +16,8 @@ export const CANONICAL_SKILL_ONTOLOGY: { name: string; patterns: RegExp[] }[] = 
   { name: 'Go', patterns: [/\bgolang\b/i, /\bgo\s+language\b/i] },
   { name: 'Rust', patterns: [/\brust\b/i] },
   { name: 'Java', patterns: [/\bjava\b(?!script)/i] },
-  { name: 'C++', patterns: [/\bc\+\+\b/i] },
-  { name: 'C#', patterns: [/\bc#\b/i, /\bcsharp\b/i] },
+  { name: 'C++', patterns: [/(?<![a-zA-Z0-9_])c\+\+(?![a-zA-Z0-9_+])/i, /\bcpp\b/i] },
+  { name: 'C#', patterns: [/(?<![a-zA-Z0-9_])c#(?![a-zA-Z0-9_#])/i, /\bcsharp\b/i] },
 
   // Frontend & UI
   { name: 'React', patterns: [/\breact(\.js)?\b/i] },
@@ -33,7 +33,14 @@ export const CANONICAL_SKILL_ONTOLOGY: { name: string; patterns: RegExp[] }[] = 
   { name: 'Express', patterns: [/\bexpress(\.js)?\b/i] },
   { name: 'Flask', patterns: [/\bflask\b/i] },
   { name: 'Django', patterns: [/\bdjango\b/i] },
-  { name: 'REST APIs', patterns: [/\brest(ful)?\s*(api|apis)?\b/i, /\bweb\s*services\b/i] },
+  {
+    name: 'REST APIs',
+    patterns: [
+      /\brestful\b/i,
+      /\brest\s+(api|apis|services?|endpoints?|architecture)\b/i,
+      /\bweb\s*services\b/i,
+    ],
+  },
   { name: 'GraphQL', patterns: [/\bgraphql\b/i] },
   { name: 'Webhooks', patterns: [/\bwebhooks?\b/i] },
   { name: 'gRPC', patterns: [/\bgrpc\b/i] },
@@ -85,6 +92,20 @@ export function extractSkillsFromText(text: string): string[] {
 }
 
 /**
+ * Checks if a detected skill is mentioned in a text block, accounting for non-word symbols like C++ and C#.
+ */
+function isSkillInBlock(skill: string, blockText: string): boolean {
+  if (skill === 'C++') {
+    return /(?<![a-zA-Z0-9_])c\+\+(?![a-zA-Z0-9_+])/i.test(blockText) || /\bcpp\b/i.test(blockText);
+  }
+  if (skill === 'C#') {
+    return /(?<![a-zA-Z0-9_])c#(?![a-zA-Z0-9_#])/i.test(blockText) || /\bcsharp\b/i.test(blockText);
+  }
+  const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(blockText);
+}
+
+/**
  * Extracts candidate projects from text.
  * Strictly adheres to grounding rules: does NOT fabricate projects.
  * If projects cannot be determined with certainty, returns an empty list.
@@ -122,18 +143,17 @@ export function extractProjectsFromText(text: string, detectedSkills: string[]):
         titleLine.length <= 80 &&
         !/^(education|skills|experience|certifications)$/i.test(titleLine)
       ) {
-        // Find technologies mentioned in this project block
-        const blockTechs = detectedSkills.filter((skill) =>
-          new RegExp(`\\b${skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(block)
-        );
+        // Find technologies mentioned strictly in this project block
+        const blockTechs = detectedSkills.filter((skill) => isSkillInBlock(skill, block));
 
         const descLines = blockLines.slice(1).join(' ');
         const description = (descLines || block).substring(0, 250).replace(/\s+/g, ' ').trim();
 
+        // Never fabricate or infer skills from elsewhere in resume if not in this project
         projects.push({
           title: titleLine,
           description,
-          technologies: blockTechs.length > 0 ? blockTechs : detectedSkills.slice(0, 3),
+          technologies: blockTechs,
         });
       }
     }

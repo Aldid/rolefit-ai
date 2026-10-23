@@ -10,6 +10,18 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Fast-fail Content-Length pre-buffer check to prevent buffering oversized payloads into RAM
+    const contentLengthHeader = req.headers.get('content-length');
+    if (contentLengthHeader) {
+      const contentLength = parseInt(contentLengthHeader, 10);
+      if (!isNaN(contentLength) && contentLength > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: 'File size exceeds the 5 MB limit. Please upload a smaller document.' },
+          { status: 413 }
+        );
+      }
+    }
+
     const formData = await req.formData();
     const file = formData.get('file');
 
@@ -48,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     if (isPdf) {
       try {
-        const parsed = await pdfParse(buffer);
+        const parsed = await pdfParse(new Uint8Array(buffer) as unknown as Buffer);
         extractedText = parsed.text || '';
       } catch {
         return NextResponse.json(

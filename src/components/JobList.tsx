@@ -40,12 +40,9 @@ export const JobList: React.FC<JobListProps> = ({
           const matchesCity = normJobLoc.includes(normCandLoc) || normCandLoc.includes(normJobLoc);
           const isJobRemote = job.format === 'Remote' || normJobLoc.includes('worldwide');
 
-          // Strict location rejects jobs in different on-site/hybrid cities
+          // Strict location rejects jobs in different on-site/hybrid cities,
+          // while preserving vacancies that are Remote/Worldwide
           if (!matchesCity && !isJobRemote) {
-            return false;
-          }
-          // If strictly matching city even against remote:
-          if (!matchesCity && normCandLoc !== 'worldwide') {
             return false;
           }
         }
