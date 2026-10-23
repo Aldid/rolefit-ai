@@ -4,19 +4,27 @@ import React, { useState } from 'react';
 import { Header } from '../components/Header';
 import { ResumeUploader } from '../components/ResumeUploader';
 import { ProfileReview } from '../components/ProfileReview';
+import { JobList } from '../components/JobList';
 import { SAMPLE_CANDIDATE } from '../data/sample-candidate';
-import { CandidateProfile } from '../types';
+import demoJobsData from '../data/demo-jobs.json';
+import { CandidateProfile, JobListing, ScoredJob } from '../types';
+import { scoreAllJobs } from '../lib/matchingEngine';
+
+const DEMO_JOBS = demoJobsData as JobListing[];
 
 export default function Home() {
   const [candidateProfile, setCandidateProfile] = useState<CandidateProfile | null>(null);
   const [activeFileName, setActiveFileName] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [scoredJobs, setScoredJobs] = useState<ScoredJob[] | null>(null);
 
   // 1-Click Sample CV load
   const handleLoadSample = () => {
     setIsLoading(true);
     setErrorMessage(null);
+    setScoredJobs(null);
     setTimeout(() => {
       setCandidateProfile(JSON.parse(JSON.stringify(SAMPLE_CANDIDATE)));
       setActiveFileName('sample-early-career-cv.pdf (Synthetic Profile)');
@@ -24,7 +32,7 @@ export default function Home() {
     }, 150);
   };
 
-  // Upload handler placeholder (detailed in Slice 3)
+  // Upload handler placeholder (connected to /api/parse-cv in Slice 3)
   const handleFileUpload = (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
       setErrorMessage('File size exceeds the 5 MB limit. Please upload a smaller document.');
@@ -44,9 +52,9 @@ export default function Home() {
 
     setIsLoading(true);
     setErrorMessage(null);
+    setScoredJobs(null);
     setActiveFileName(file.name);
 
-    // Fallback client simulation until Slice 3 API Route is wired
     setTimeout(() => {
       setCandidateProfile({
         name: file.name.replace(/\.[^/.]+$/, ''),
@@ -64,23 +72,43 @@ export default function Home() {
         preferredLocation: 'Worldwide',
       });
       setIsLoading(false);
-    }, 500);
+    }, 400);
   };
 
   const handleResetSession = () => {
     setCandidateProfile(null);
     setActiveFileName(undefined);
     setIsLoading(false);
+    setIsSearching(false);
     setErrorMessage(null);
+    setScoredJobs(null);
   };
 
   const handleFindMatches = () => {
-    alert('Slice 2 matching engine will trigger here!');
+    if (!candidateProfile) return;
+    setIsSearching(true);
+
+    setTimeout(() => {
+      const results = scoreAllJobs(candidateProfile, DEMO_JOBS);
+      setScoredJobs(results);
+      setIsSearching(false);
+
+      // Smooth scroll to results
+      setTimeout(() => {
+        const resultsEl = document.getElementById('results-section');
+        if (resultsEl) {
+          resultsEl.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }, 350);
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      <Header onReset={handleResetSession} hasActiveSession={Boolean(candidateProfile)} />
+      <Header
+        onReset={handleResetSession}
+        hasActiveSession={Boolean(candidateProfile || scoredJobs)}
+      />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
         <ResumeUploader
@@ -97,8 +125,14 @@ export default function Home() {
             profile={candidateProfile}
             onUpdateProfile={setCandidateProfile}
             onFindMatches={handleFindMatches}
-            isSearching={false}
+            isSearching={isSearching}
           />
+        )}
+
+        {scoredJobs && (
+          <section id="results-section" className="pt-2">
+            <JobList scoredJobs={scoredJobs} />
+          </section>
         )}
       </main>
 
@@ -108,8 +142,8 @@ export default function Home() {
             RoleFit AI — Built with AI: Basics Hackathon Proof of Concept
           </p>
           <p>
-            Deterministic 50/35/15 explainable scoring. Ephemeral in-memory processing. All demo job
-            data is synthetic.
+            Deterministic 50/35/15 explainable scoring. Ephemeral in-memory processing. All 5 demo
+            job listings are synthetic.
           </p>
         </div>
       </footer>

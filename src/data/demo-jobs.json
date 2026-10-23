@@ -1,0 +1,72 @@
+[
+  {
+    "id": "job_ai_automation",
+    "title": "Junior AI Automation Engineer",
+    "company": "Synthetix Automations (Synthetic Demo)",
+    "roleCategory": "AI Automation Engineer",
+    "location": "Worldwide",
+    "format": "Remote",
+    "requiredSkills": ["Python", "FastAPI", "REST APIs", "Data Validation", "Git"],
+    "preferredSkills": ["Workflow Orchestration", "Playwright", "Docker"],
+    "domainKeywords": ["AI", "automation", "workflow", "LLM", "intake", "lead", "customer response", "safety"],
+    "experienceLevel": "Junior (0-2 years)",
+    "description": "Build reliable customer intake and LLM automation pipelines with safety guardrails, webhook orchestration, and robust REST API integrations.",
+    "isSyntheticDemo": true
+  },
+  {
+    "id": "job_fullstack",
+    "title": "Junior Full-Stack Developer",
+    "company": "NovaStack Systems (Synthetic Demo)",
+    "roleCategory": "Junior Full-Stack Developer",
+    "location": "London, UK",
+    "format": "Hybrid",
+    "requiredSkills": ["TypeScript", "React", "Next.js", "Node.js", "Tailwind CSS"],
+    "preferredSkills": ["GraphQL", "SQL", "CI/CD"],
+    "domainKeywords": ["web", "frontend", "dashboard", "component", "state", "simulator", "UI"],
+    "experienceLevel": "Entry Level / Junior (0-1 year)",
+    "description": "Join our core product team building responsive React and Next.js interfaces with Tailwind styling, clean state machines, and Node backend APIs.",
+    "isSyntheticDemo": true
+  },
+  {
+    "id": "job_python_dev",
+    "title": "Junior Python Integration Developer",
+    "company": "DataStream Workflows (Synthetic Demo)",
+    "roleCategory": "Junior Python Developer",
+    "location": "Berlin, Germany",
+    "format": "Remote",
+    "requiredSkills": ["Python", "REST APIs", "SQL", "Git"],
+    "preferredSkills": ["FastAPI", "Celery", "Redis"],
+    "domainKeywords": ["backend", "database", "integration", "pipeline", "automation", "API"],
+    "experienceLevel": "Junior (1-2 years)",
+    "description": "Develop asynchronous API integrations and data processing pipelines connecting business systems and relational databases.",
+    "isSyntheticDemo": true
+  },
+  {
+    "id": "job_qa_intern",
+    "title": "QA Automation Intern",
+    "company": "OmniQuality Labs (Synthetic Demo)",
+    "roleCategory": "QA Automation Intern",
+    "location": "Almaty, Kazakhstan",
+    "format": "On-site",
+    "requiredSkills": ["Python", "JavaScript", "Git"],
+    "preferredSkills": ["Playwright", "Selenium", "Jest", "Pytest"],
+    "domainKeywords": ["testing", "quality", "automation", "verification", "e2e", "regression"],
+    "experienceLevel": "Internship (Student / Early Career)",
+    "description": "Assist in authoring end-to-end regression tests and automated browser verification suites for web applications and state simulators.",
+    "isSyntheticDemo": true
+  },
+  {
+    "id": "job_product_ops",
+    "title": "Technical Support & Product Operations",
+    "company": "CloudOps Nexus (Synthetic Demo)",
+    "roleCategory": "Technical Support / Product Operations",
+    "location": "San Francisco, CA",
+    "format": "Hybrid",
+    "requiredSkills": ["SQL", "REST APIs", "JavaScript"],
+    "preferredSkills": ["Python", "Webhooks", "Zendesk API"],
+    "domainKeywords": ["support", "operations", "customer", "CRM", "troubleshooting", "analytics", "intake"],
+    "experienceLevel": "Associate / Junior (0-2 years)",
+    "description": "Bridge customer success and engineering by investigating API issues, diagnosing webhooks, and optimizing operational workflows.",
+    "isSyntheticDemo": true
+  }
+]

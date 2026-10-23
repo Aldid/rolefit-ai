@@ -9,7 +9,7 @@ Build mode: fast
 
 ## Slices
 
-- [ ] **1. Next.js scaffold and interactive Sample Profile Review**
+- [x] **1. Next.js scaffold and interactive Sample Profile Review**
   Becomes usable: A running Next.js application at `http://localhost:3000` with the warm-neutral career theme, Header, upload container, and a working "⚡ Load Sample CV" button that instantly loads the synthetic early-career profile with editable skill badges, project highlights, and role/location selectors.
   Why now: Establishes the running application shell, design system, and candidate state structure so every subsequent matching slice has an immediate visual landing surface.
   PRD ref: `prd.md > The Core Journey` (steps 1–3), `prd.md > Look and Feel`, `prd.md > Features and Behavior > 1. Resume Ingestion & Quick Demo`
