@@ -154,9 +154,9 @@ async function runApiTests() {
   assert(dataOver5MB.error.includes('5 MB'), 'Error explains 5 MB file size limit');
   console.log('  ✓ File of 5 MB + 1 byte rejected with 413 Payload Too Large');
 
-  // --- 4. Missing or Invalid Content-Length Header Handling ---
+  // --- 4. Missing or Invalid Content-Length Header Protection ---
   console.log('\n--- 4. Testing Missing or Invalid Content-Length Header Protection ---');
-  // 4.1 Missing Content-Length header with file > 5 MB
+  // 4.1 Missing Content-Length header with file > 5 MB (FormData)
   const reqNoHeaderOver = new NextRequest('http://localhost:3000/api/parse-cv', {
     method: 'POST',
     body: fdOver5MB,
@@ -166,9 +166,9 @@ async function runApiTests() {
   assert.strictEqual(
     resNoHeaderOver.status,
     413,
-    'Missing Content-Length header with file > 5MB must still be rejected with 413 via file.size check'
+    'Missing Content-Length header with file > 5MB must still be rejected with 413'
   );
-  console.log('  ✓ Missing Content-Length header: file.size check strictly enforces 413 on oversized file');
+  console.log('  ✓ Missing Content-Length header: rejected with 413 on oversized file');
 
   // 4.2 Invalid Content-Length header ("invalid-not-a-number") with file > 5 MB
   const reqBadHeaderOver = new NextRequest('http://localhost:3000/api/parse-cv', {
@@ -182,9 +182,9 @@ async function runApiTests() {
   assert.strictEqual(
     resBadHeaderOver.status,
     413,
-    'Invalid/NaN Content-Length header with file > 5MB must still be rejected with 413 via file.size check'
+    'Invalid/NaN Content-Length header with file > 5MB must still be rejected with 413'
   );
-  console.log('  ✓ Invalid/NaN Content-Length header: file.size check strictly enforces 413 on oversized file');
+  console.log('  ✓ Invalid/NaN Content-Length header: rejected with 413 on oversized file');
 
   // 4.3 Missing Content-Length header with valid 5 MB file
   const reqNoHeaderValid = new NextRequest('http://localhost:3000/api/parse-cv', {
@@ -199,6 +199,79 @@ async function runApiTests() {
     'Missing Content-Length header with valid 5 MB file succeeds with 200 OK'
   );
   console.log('  ✓ Missing Content-Length header: valid 5 MB file succeeds with 200 OK');
+
+  // 4.4 Stream-level Early Cut-Off: Oversized Chunked Stream without Content-Length
+  console.log('\n--- 4.4 Testing Stream-level Early Cut-Off (Chunked stream without Content-Length) ---');
+  const chunkedBoundary = '----WebKitFormBoundaryChunkedSafetyTest';
+  const chunkedHeader = `--${chunkedBoundary}\r\nContent-Disposition: form-data; name="file"; filename="oversized-stream.pdf"\r\nContent-Type: application/pdf\r\n\r\n`;
+
+  // Producer generating a 10 MB chunked stream in 64 KB pieces
+  let chunkedBytesEmitted = 0;
+  let chunkCount = 0;
+  const targetTotalChunks = 160; // 160 * 64 KB = 10,240 KB (~10 MB)
+  const chunkSize = 64 * 1024;
+
+  const oversizedChunkedStream = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (chunkCount === 0) {
+        const headerBuf = Buffer.from(chunkedHeader);
+        chunkedBytesEmitted += headerBuf.length;
+        controller.enqueue(new Uint8Array(headerBuf));
+        chunkCount++;
+      } else if (chunkCount < targetTotalChunks) {
+        chunkedBytesEmitted += chunkSize;
+        controller.enqueue(new Uint8Array(chunkSize));
+        chunkCount++;
+      } else {
+        const footerBuf = Buffer.from(`\r\n--${chunkedBoundary}--\r\n`);
+        chunkedBytesEmitted += footerBuf.length;
+        controller.enqueue(new Uint8Array(footerBuf));
+        controller.close();
+      }
+    },
+  });
+
+  const reqChunkedOversized = new NextRequest('http://localhost:3000/api/parse-cv', {
+    method: 'POST',
+    headers: {
+      'content-type': `multipart/form-data; boundary=${chunkedBoundary}`,
+      // NO content-length header: chunked stream simulation
+    },
+    body: oversizedChunkedStream,
+    // @ts-expect-error duplex option is required by undici when body is a stream
+    duplex: 'half',
+  });
+
+  const resChunkedOversized = await POST(reqChunkedOversized);
+  // Verification A: HTTP status 413 Payload Too Large
+  assert.strictEqual(
+    resChunkedOversized.status,
+    413,
+    'Oversized chunked request must return 413 Payload Too Large'
+  );
+  const dataChunkedOversized = await resChunkedOversized.json();
+  assert(
+    dataChunkedOversized.error.includes('5 MB'),
+    'Error response must explain 5 MB file size limit'
+  );
+
+  // Verification B: Physical RAM protection - the stream reader MUST have aborted early
+  // without buffering the entire 10 MB payload into memory.
+  const maxAllowedBytesBeforeCutoff = 5 * 1024 * 1024 + 128 * 1024; // 5 MB + margin
+  assert(
+    chunkedBytesEmitted < 6 * 1024 * 1024,
+    `Stream must abort early! Emitted ${chunkedBytesEmitted} bytes, which should be < 6 MB (total payload was 10 MB)`
+  );
+  assert(
+    chunkCount < targetTotalChunks,
+    `Stream producer must not finish all chunks! Stopped at chunk ${chunkCount}/${targetTotalChunks}`
+  );
+  console.log(
+    `  ✓ Verification A (HTTP status): 413 Payload Too Large correctly returned`
+  );
+  console.log(
+    `  ✓ Verification B (RAM protection): Stream consumption aborted early at ${(chunkedBytesEmitted / (1024 * 1024)).toFixed(2)} MB (chunk ${chunkCount}/${targetTotalChunks}), preventing 10 MB full RAM buffering`
+  );
 
   // --- 5. Unsupported File Format ---
   console.log('\n--- 5. Testing Unsupported Format Rejection (.png, .txt) ---');
