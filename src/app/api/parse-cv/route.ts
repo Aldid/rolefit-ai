@@ -11,8 +11,18 @@ const MAX_MULTIPART_OVERHEAD = 64 * 1024; // 64 KB allowance for multipart bound
 
 /**
  * Wraps a ReadableStream to monitor and limit incoming chunked byte volume.
- * If the byte stream exceeds maxBytes, the controller is errored with PAYLOAD_TOO_LARGE,
- * immediately halting stream consumption before buffering the entire payload into RAM.
+ * If the byte stream exceeds maxBytes:
+ * 1. Explicitly cancels the upstream reader/source stream to signal termination and release resources.
+ * 2. Releases the reader lock.
+ * 3. Errors the downstream controller with PAYLOAD_TOO_LARGE, halting consumption before RAM exhaustion.
+ *
+ * Platform compatibility note (Vercel vs Node.js runtime):
+ * Official Vercel Serverless Function documentation specifies a hard gateway body limit of 4.5 MB.
+ * If deployed to Vercel Serverless Functions, any request exceeding 4.5 MB total body (including
+ * multipart boundary and headers) is blocked by Vercel's edge proxy with 413 before reaching this route.
+ * When running in Node.js / containerized environments (Docker, VPS, local Next.js server),
+ * this stream-level meterStream provides in-process protection allowing a valid 5 MB file + 64 KB overhead
+ * (~5.064 MB) while strictly rejecting any oversized chunked payload early.
  */
 function meterStream(source: ReadableStream<Uint8Array>, maxBytes: number): ReadableStream<Uint8Array> {
   let bytesCount = 0;
@@ -28,6 +38,16 @@ function meterStream(source: ReadableStream<Uint8Array>, maxBytes: number): Read
         }
         bytesCount += value.byteLength;
         if (bytesCount > maxBytes) {
+          try {
+            await reader.cancel('PAYLOAD_TOO_LARGE');
+          } catch {
+            // Upstream cancellation errors caught safely
+          }
+          try {
+            reader.releaseLock();
+          } catch {
+            // Ignore lock release errors if already released
+          }
           controller.error(new Error('PAYLOAD_TOO_LARGE'));
           return;
         }
@@ -41,6 +61,11 @@ function meterStream(source: ReadableStream<Uint8Array>, maxBytes: number): Read
         await reader.cancel(reason);
       } catch {
         // Ignore downstream cancellation errors
+      }
+      try {
+        reader.releaseLock();
+      } catch {
+        // Ignore lock release errors if already released
       }
     },
   });

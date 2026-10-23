@@ -200,14 +200,16 @@ async function runApiTests() {
   );
   console.log('  ✓ Missing Content-Length header: valid 5 MB file succeeds with 200 OK');
 
-  // 4.4 Stream-level Early Cut-Off: Oversized Chunked Stream without Content-Length
-  console.log('\n--- 4.4 Testing Stream-level Early Cut-Off (Chunked stream without Content-Length) ---');
+  // 4.4 Stream-level Early Cut-Off & Upstream Cancellation: Oversized Chunked Stream without Content-Length
+  console.log('\n--- 4.4 Testing Stream-level Early Cut-Off & Upstream Cancellation (Chunked without Content-Length) ---');
   const chunkedBoundary = '----WebKitFormBoundaryChunkedSafetyTest';
   const chunkedHeader = `--${chunkedBoundary}\r\nContent-Disposition: form-data; name="file"; filename="oversized-stream.pdf"\r\nContent-Type: application/pdf\r\n\r\n`;
 
-  // Producer generating a 10 MB chunked stream in 64 KB pieces
+  // Producer generating a 10 MB chunked stream in 64 KB pieces with cancel tracking
   let chunkedBytesEmitted = 0;
   let chunkCount = 0;
+  let sourceCancelled = false;
+  let sourceCancelReason = '';
   const targetTotalChunks = 160; // 160 * 64 KB = 10,240 KB (~10 MB)
   const chunkSize = 64 * 1024;
 
@@ -228,6 +230,10 @@ async function runApiTests() {
         controller.enqueue(new Uint8Array(footerBuf));
         controller.close();
       }
+    },
+    cancel(reason) {
+      sourceCancelled = true;
+      sourceCancelReason = String(reason);
     },
   });
 
@@ -257,7 +263,6 @@ async function runApiTests() {
 
   // Verification B: Physical RAM protection - the stream reader MUST have aborted early
   // without buffering the entire 10 MB payload into memory.
-  const maxAllowedBytesBeforeCutoff = 5 * 1024 * 1024 + 128 * 1024; // 5 MB + margin
   assert(
     chunkedBytesEmitted < 6 * 1024 * 1024,
     `Stream must abort early! Emitted ${chunkedBytesEmitted} bytes, which should be < 6 MB (total payload was 10 MB)`
@@ -266,11 +271,27 @@ async function runApiTests() {
     chunkCount < targetTotalChunks,
     `Stream producer must not finish all chunks! Stopped at chunk ${chunkCount}/${targetTotalChunks}`
   );
+
+  // Verification C: Explicit Upstream Cancellation - reader.cancel() must have invoked source.cancel()
+  assert.strictEqual(
+    sourceCancelled,
+    true,
+    'Upstream source stream cancel() handler MUST be explicitly triggered when limit is exceeded'
+  );
+  assert.strictEqual(
+    sourceCancelReason,
+    'PAYLOAD_TOO_LARGE',
+    'Upstream source cancel reason must be PAYLOAD_TOO_LARGE'
+  );
+
   console.log(
     `  ✓ Verification A (HTTP status): 413 Payload Too Large correctly returned`
   );
   console.log(
     `  ✓ Verification B (RAM protection): Stream consumption aborted early at ${(chunkedBytesEmitted / (1024 * 1024)).toFixed(2)} MB (chunk ${chunkCount}/${targetTotalChunks}), preventing 10 MB full RAM buffering`
+  );
+  console.log(
+    `  ✓ Verification C (Upstream cancellation): source.cancel() was explicitly triggered with reason "${sourceCancelReason}"`
   );
 
   // --- 5. Unsupported File Format ---
