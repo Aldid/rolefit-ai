@@ -49,7 +49,7 @@ Build mode: fast
   Learner check: Test filtering by an uncommon location to see the empty state and recovery button, then click "New Session" to verify clean reset.
   Commit: `Add collapsible profile summary, empty state recovery, and session reset`
 
-- [ ] **5. Hackathon documentation, synthetic jobs license notes, and 2m 20s demo video script**
+- [x] **5. Hackathon documentation, synthetic jobs license notes, and 2m 20s demo video script**
   Becomes usable: Complete English documentation in `README.md` containing project overview, architecture diagram, local run instructions, synthetic vacancy attribution & license notice, and a scene-by-scene script timed for a 2-minute 20-second video demo.
   Why now: Prepares all required hackathon submission deliverables and provides the exact speaking script for recording the demo video.
   PRD ref: `prd.md > What We're Building`
