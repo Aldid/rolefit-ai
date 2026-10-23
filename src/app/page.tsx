@@ -32,47 +32,60 @@ export default function Home() {
     }, 150);
   };
 
-  // Upload handler placeholder (connected to /api/parse-cv in Slice 3)
-  const handleFileUpload = (file: File) => {
+  // Real in-memory PDF/DOCX upload via /api/parse-cv
+  const handleFileUpload = async (file: File) => {
+    // 1. Client-side size guard (5 MB)
     if (file.size > 5 * 1024 * 1024) {
       setErrorMessage('File size exceeds the 5 MB limit. Please upload a smaller document.');
       return;
     }
-    const validTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
-    const isDocx = file.name.endsWith('.docx');
-    const isPdf = file.name.endsWith('.pdf');
 
-    if (!validTypes.includes(file.type) && !isDocx && !isPdf) {
+    // 2. Client-side extension validation
+    const lowerName = file.name.toLowerCase();
+    const isDocx = lowerName.endsWith('.docx');
+    const isPdf = lowerName.endsWith('.pdf');
+
+    if (!isDocx && !isPdf) {
       setErrorMessage('Unsupported file format. Please upload a PDF or DOCX file (up to 5 MB).');
       return;
     }
 
     setIsLoading(true);
     setErrorMessage(null);
-    setScoredJobs(null);
-    setActiveFileName(file.name);
 
-    setTimeout(() => {
-      setCandidateProfile({
-        name: file.name.replace(/\.[^/.]+$/, ''),
-        summary: 'Candidate profile extracted from ' + file.name,
-        skills: ['TypeScript', 'Python', 'React', 'Node.js', 'REST APIs', 'Git'],
-        projects: [
-          {
-            title: 'Uploaded Resume Project',
-            description: 'Custom projects extracted from document text.',
-            technologies: ['TypeScript', 'React', 'REST APIs'],
-          },
-        ],
-        targetRole: 'AI Automation Engineer',
-        preferredFormat: 'Remote',
-        preferredLocation: 'Worldwide',
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/parse-cv', {
+        method: 'POST',
+        body: formData,
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Safe error state without erasing previous valid profile
+        setErrorMessage(data.error || 'Failed to parse resume document.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!data.profile) {
+        setErrorMessage('Server did not return a valid candidate profile.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Successful parse
+      setCandidateProfile(data.profile);
+      setActiveFileName(file.name);
+      setScoredJobs(null); // Reset previous match results so candidate reviews new profile
       setIsLoading(false);
-    }, 400);
+    } catch {
+      setErrorMessage('Network or server error while uploading the resume. Please check your connection and try again.');
+      setIsLoading(false);
+    }
   };
 
   const handleResetSession = () => {

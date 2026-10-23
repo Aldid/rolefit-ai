@@ -19,7 +19,7 @@ Build mode: fast
   Learner check: Open `http://localhost:3000`, click "Load Sample CV", and verify the candidate skills and project summary appear cleanly in the warm-neutral design.
   Commit: `Initialize Next.js app and interactive candidate profile review`
 
-- [ ] **2. Synthetic jobs dataset and explainable 50/35/15 matching engine with best match auto-expand**
+- [x] **2. Synthetic jobs dataset and explainable 50/35/15 matching engine with best match auto-expand**
   Becomes usable: Clicking "Find Matches" evaluates the candidate profile against 5 curated synthetic vacancies using the exact 50/35/15 mathematical formula. Displays ranked job cards with the #1 top match automatically expanded, showing score bars, green matched tags, amber gap tags, and a grounded CV adaptation advice bullet.
   Why now: Implements the unique kernel and the primary "aha-moment" of RoleFit AI early, proving the core value proposition before adding secondary error and file upload plumbing.
   PRD ref: `prd.md > The Core Journey` (steps 4–5), `prd.md > Features and Behavior > 3. Explainable 50/35/15 Matching Engine`, `prd.md > Features and Behavior > 4. Job Breakdown & Advice Presentation`
@@ -29,7 +29,7 @@ Build mode: fast
   Learner check: Click "Find Matches" on the sample profile, inspect the #1 ranked job card, and check that the 50/35/15 breakdown bars and advice bullet are clear and mathematically sound.
   Commit: `Implement 50/35/15 matching engine and ranked vacancy cards`
 
-- [ ] **3. In-memory PDF and DOCX parser with format validation and error states**
+- [x] **3. In-memory PDF and DOCX parser with format validation and error states**
   Becomes usable: Users can drag and drop custom `.pdf` and `.docx` resumes (<= 5 MB). The serverless API route `/api/parse-cv` reads the file buffer in memory without writing to disk or logging text, extracts skills via deterministic ontology, and populates the review card. Selecting an invalid file type or oversized file triggers an inline error message without clearing form inputs.
   Why now: Completes the real file ingestion pathway while validating memory safety, privacy constraints, and file failure handling.
   PRD ref: `prd.md > Features and Behavior > 1. Resume Ingestion & Quick Demo`, `prd.md > States and Boundaries > Unsupported File / Oversize Error State`

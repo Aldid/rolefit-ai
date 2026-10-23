@@ -46,6 +46,13 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
+  };
+
   return (
     <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
       <div className="text-center max-w-xl mx-auto mb-6">
@@ -77,20 +84,24 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
           <button
             onClick={onLoadSample}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white text-sm font-medium shadow-sm transition-all disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white text-sm font-medium shadow-sm transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
           >
             <Zap className="w-4 h-4 fill-white" />
             <span>⚡ Load Sample CV (1-Click)</span>
           </button>
         </div>
 
-        {/* Option 2: Upload custom CV */}
+        {/* Option 2: Upload custom CV with keyboard accessibility */}
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Upload resume file (PDF or DOCX up to 5 MB)"
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+          onKeyDown={handleKeyDown}
+          className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 border-dashed cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
             isDragging
               ? 'border-teal-500 bg-teal-50/40'
               : 'border-slate-300 hover:border-teal-400 bg-slate-50/50 hover:bg-white'
@@ -116,6 +127,7 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
             Drop your resume here or <span className="text-teal-600 underline">browse</span>
           </p>
           <p className="text-xs text-slate-500 mt-1">Supports PDF or DOCX (max 5 MB)</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Press Enter or Space to choose a file</p>
         </div>
       </div>
 
@@ -146,7 +158,7 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({
       {errorMessage && (
         <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-amber-900">
           <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-          <div className="text-xs">
+          <div className="text-xs flex-1">
             <span className="font-semibold">Upload notice: </span>
             {errorMessage}
           </div>

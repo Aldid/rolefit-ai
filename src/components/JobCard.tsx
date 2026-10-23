@@ -35,6 +35,13 @@ export const JobCard: React.FC<JobCardProps> = ({
     return `${Math.min(100, Math.max(0, pct))}%`;
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggleExpand();
+    }
+  };
+
   return (
     <div
       className={`rounded-2xl border transition-all ${
@@ -45,8 +52,15 @@ export const JobCard: React.FC<JobCardProps> = ({
     >
       {/* Header bar */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        aria-label={`${job.title} at ${job.company}, Match Score ${breakdown.totalScore}%. Press Enter to ${
+          isExpanded ? 'collapse' : 'expand'
+        }`}
         onClick={onToggleExpand}
-        className="p-5 sm:p-6 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none"
+        onKeyDown={handleKeyDown}
+        className="p-5 sm:p-6 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none focus:outline-none focus:ring-2 focus:ring-teal-500 rounded-2xl"
       >
         <div className="flex items-start gap-4">
           <div
@@ -94,16 +108,15 @@ export const JobCard: React.FC<JobCardProps> = ({
               Skills: {breakdown.skillsScore}/50 | Exp: {breakdown.experienceScore}/35 | Fit:{' '}
               {breakdown.locationScore}/15
             </div>
-            <div className="text-[11px] text-slate-400">Click to {isExpanded ? 'collapse' : 'expand details'}</div>
+            <div className="text-[11px] text-slate-400">Click or press Enter to {isExpanded ? 'collapse' : 'expand details'}</div>
           </div>
 
-          <button
-            type="button"
+          <div
             className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 border border-slate-200"
-            aria-label={isExpanded ? 'Collapse card' : 'Expand card'}
+            aria-hidden="true"
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
+          </div>
         </div>
       </div>
 
