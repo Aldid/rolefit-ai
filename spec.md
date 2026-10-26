@@ -54,6 +54,8 @@ Implements `prd.md > The Core Journey`.
   npm run dev
   ```
 - **Demo Access:** Open `http://localhost:3000` in any modern web browser.
+- **Public GitHub Repository:** [`https://github.com/Aldid/rolefit-ai`](https://github.com/Aldid/rolefit-ai)
+- **Public Demo Video:** [`https://youtu.be/lgMua39DM20`](https://youtu.be/lgMua39DM20) (2m 54s, Full HD 1080p, explainable 50/35/15 walkthrough with synchronized narration)
 - **Demo Recording Target:** The entire end-to-end journey (Home -> Load Sample CV -> Review Profile -> Find Matches -> Inspect Best Match 50/35/15 Breakdown & Advice -> Reset Session) takes approximately 60–90 seconds, perfectly calibrated for a concise 2-minute 20-second video.
 - **Deployment (Optional):** Can be deployed in one click to Vercel (`vercel deploy`) if a public link is desired for Devpost submission.
 
