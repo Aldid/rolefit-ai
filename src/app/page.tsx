@@ -6,6 +6,7 @@ import { ResumeUploader } from '../components/ResumeUploader';
 import { ProfileReview } from '../components/ProfileReview';
 import { ProfileSummaryRibbon } from '../components/ProfileSummaryRibbon';
 import { JobList } from '../components/JobList';
+import { ApplicationAssistantModal } from '../components/ApplicationAssistantModal';
 import { SAMPLE_CANDIDATE } from '../data/sample-candidate';
 import demoJobsData from '../data/demo-jobs.json';
 import { CandidateProfile, JobListing, ScoredJob } from '../types';
@@ -16,21 +17,25 @@ const DEMO_JOBS = demoJobsData as JobListing[];
 export default function Home() {
   const [candidateProfile, setCandidateProfile] = useState<CandidateProfile | null>(null);
   const [activeFileName, setActiveFileName] = useState<string | undefined>(undefined);
+  const [cvSource, setCvSource] = useState<'sample' | 'upload' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [scoredJobs, setScoredJobs] = useState<ScoredJob[] | null>(null);
   const [isProfileCollapsed, setIsProfileCollapsed] = useState(false);
+  const [selectedApplicationJob, setSelectedApplicationJob] = useState<ScoredJob | null>(null);
 
   // 1-Click Sample CV load
   const handleLoadSample = () => {
     setIsLoading(true);
     setErrorMessage(null);
     setScoredJobs(null);
+    setSelectedApplicationJob(null);
     setIsProfileCollapsed(false);
     setTimeout(() => {
       setCandidateProfile(JSON.parse(JSON.stringify(SAMPLE_CANDIDATE)));
-      setActiveFileName('sample-early-career-cv.pdf (Synthetic Profile)');
+      setActiveFileName('sample-early-career-cv.pdf');
+      setCvSource('sample');
       setIsLoading(false);
     }, 150);
   };
@@ -84,7 +89,9 @@ export default function Home() {
       // Successful parse
       setCandidateProfile(data.profile);
       setActiveFileName(file.name);
+      setCvSource('upload');
       setScoredJobs(null); // Reset previous match results so candidate reviews new profile
+      setSelectedApplicationJob(null);
       setIsLoading(false);
     } catch {
       setErrorMessage(
@@ -98,10 +105,12 @@ export default function Home() {
   const handleResetSession = () => {
     setCandidateProfile(null);
     setActiveFileName(undefined);
+    setCvSource(null);
     setIsLoading(false);
     setIsSearching(false);
     setErrorMessage(null);
     setScoredJobs(null);
+    setSelectedApplicationJob(null);
     setIsProfileCollapsed(false);
   };
 
@@ -141,7 +150,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-[#fcfbf9]">
       <Header
         onReset={handleResetSession}
         hasActiveSession={Boolean(candidateProfile || scoredJobs)}
@@ -168,6 +177,7 @@ export default function Home() {
               onFileUpload={handleFileUpload}
               isLoading={isLoading}
               activeFileName={activeFileName}
+              cvSource={cvSource}
               errorMessage={errorMessage}
               onClearError={() => setErrorMessage(null)}
             />
@@ -190,14 +200,24 @@ export default function Home() {
               scoredJobs={scoredJobs}
               candidateProfile={candidateProfile || undefined}
               onResetLocationFilter={handleResetLocationFilter}
+              onPrepareApplication={setSelectedApplicationJob}
             />
           </section>
         )}
+
+        {/* Application Assistant Modal (Demonstration Experience) */}
+        {selectedApplicationJob && candidateProfile && (
+          <ApplicationAssistantModal
+            scoredJob={selectedApplicationJob}
+            candidateProfile={candidateProfile}
+            onClose={() => setSelectedApplicationJob(null)}
+          />
+        )}
       </main>
 
-      <footer className="border-t border-slate-200 bg-white py-6 mt-auto">
+      <footer className="border-t border-slate-200/80 bg-white/70 py-6 mt-auto">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center text-xs text-slate-500 space-y-1">
-          <p className="font-medium text-slate-700">
+          <p className="font-semibold text-slate-800">
             RoleFit AI — Built with AI: Basics Hackathon Proof of Concept
           </p>
           <p>

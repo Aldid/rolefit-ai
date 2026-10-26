@@ -4,6 +4,7 @@ import demoJobsData from '../src/data/demo-jobs.json';
 import { SAMPLE_CANDIDATE } from '../src/data/sample-candidate';
 import { JobListing, CandidateProfile } from '../src/types';
 import { scoreAllJobs } from '../src/lib/matchingEngine';
+import { formatEmptyResultsReason } from '../src/components/EmptyResults';
 
 const DEMO_JOBS = demoJobsData as JobListing[];
 
@@ -80,8 +81,22 @@ assert(!londonJobIds.includes('job_product_ops'), 'Must exclude Hybrid San Franc
 console.log('  ✓ Strict location filter preserves city match (London) AND Remote vacancies (3 total)');
 console.log('  ✓ Mismatched physical locations (Almaty on-site, San Francisco hybrid) strictly excluded');
 
-// Case B: Restrictive format on London candidate yields 0 matches -> EmptyResults
-console.log('\n--- 1.2 Restrictive Filter Combination Yielding Empty State ---');
+// Case 1.2: Strict location for Tokyo candidate (City + Remote vacancies)
+console.log('\n--- 1.2 Strict Location for Tokyo (Candidate Profile) ---');
+const filteredTokyoStrict = filterJobs(scored, 'All', true, 'Tokyo', '');
+assert.strictEqual(
+  filteredTokyoStrict.length,
+  2,
+  'Strict location filter for Tokyo must preserve exactly the 2 Remote vacancies'
+);
+assert(
+  filteredTokyoStrict.every(({ job }) => job.format === 'Remote'),
+  'All vacancies preserved under strict Tokyo filter must be Remote vacancies'
+);
+console.log('  ✓ Strict location for Tokyo preserves exactly 2 Remote vacancies (does NOT cause 0 matches)');
+
+// Case 1.3: Restrictive format on London candidate yields 0 matches -> EmptyResults
+console.log('\n--- 1.3 Restrictive Filter Combination Yielding Empty State ---');
 const filteredLondonOnsite = filterJobs(scored, 'On-site', true, 'London, UK', '');
 assert.strictEqual(
   filteredLondonOnsite.length,
@@ -90,7 +105,7 @@ assert.strictEqual(
 );
 console.log('  ✓ Restrictive filter (London + On-site) yields 0 vacancies (triggers EmptyResults)');
 
-// Case C: Impossible manual location query -> EmptyResults
+// Case 1.4: Manual text search "Tokyo" without strict location yields 0 matches
 const filteredTokyoQuery = filterJobs(scored, 'All', false, 'Worldwide', 'Tokyo');
 assert.strictEqual(
   filteredTokyoQuery.length,
@@ -99,8 +114,70 @@ assert.strictEqual(
 );
 console.log('  ✓ Manual filter query "Tokyo" yields 0 vacancies (triggers EmptyResults)');
 
-// Case D: Reset filters / "Show all 5 jobs"
-console.log('\n--- 1.3 Recovery: "Show all 5 jobs" ---');
+// Case 1.5: Accurate EmptyResults Description Invariants (No False Strict Filter Claims)
+console.log('\n--- 1.4 Testing EmptyResults Explanation Invariants ---');
+
+// Case A: Caused solely by manual search query
+const searchOnlyExplanation = formatEmptyResultsReason({
+  searchQuery: 'Tokyo',
+  selectedFormat: 'All',
+  isStrictLocation: false,
+});
+assert.strictEqual(
+  searchOnlyExplanation.title,
+  'No Vacancies Match Your Search Query',
+  'Title must be specific to search query when search alone causes 0 matches'
+);
+assert(
+  searchOnlyExplanation.description.includes('search query "Tokyo"'),
+  'Description must mention the search query "Tokyo"'
+);
+assert(
+  !searchOnlyExplanation.description.toLowerCase().includes('strict location filter'),
+  'Search-only empty state must NOT falsely claim strict location filter was responsible'
+);
+console.log('  ✓ Search-only empty state accurately references search query and does NOT claim strict filter');
+
+// Case B: Caused by combined search query + strict location
+const combinedExplanation = formatEmptyResultsReason({
+  searchQuery: 'Tokyo',
+  selectedFormat: 'All',
+  isStrictLocation: true,
+  candidateLocation: 'Tokyo',
+});
+assert.strictEqual(
+  combinedExplanation.title,
+  'No Vacancies Match Your Search and Location Filters',
+  'Title must reflect combined search and location filters'
+);
+assert(
+  combinedExplanation.description.includes('search query "Tokyo"'),
+  'Description must mention search query "Tokyo"'
+);
+assert(
+  combinedExplanation.description.includes('Remote vacancies'),
+  'Description must explain that Remote vacancies were preserved by location but excluded by search'
+);
+console.log('  ✓ Combined search + strict location empty state accurately explains Remote preservation');
+
+// Case C: Caused solely by work format filter
+const formatOnlyExplanation = formatEmptyResultsReason({
+  selectedFormat: 'On-site',
+  isStrictLocation: false,
+});
+assert.strictEqual(
+  formatOnlyExplanation.title,
+  'No Vacancies Match Your Work Format Filter',
+  'Title must be specific to work format when format alone causes 0 matches'
+);
+assert(
+  !formatOnlyExplanation.description.toLowerCase().includes('strict location'),
+  'Format-only empty state must NOT mention strict location'
+);
+console.log('  ✓ Format-only empty state accurately references work format without mentioning strict location');
+
+// Case 1.6: Recovery: "Show all 5 jobs"
+console.log('\n--- 1.5 Recovery: "Show all 5 jobs" ---');
 const recoveredJobs = filterJobs(scored, 'All', false, 'Worldwide', '');
 assert.strictEqual(
   recoveredJobs.length,
@@ -109,7 +186,7 @@ assert.strictEqual(
 );
 console.log('  ✓ Recovery action ("Show all 5 jobs") restores all 5 ranked vacancies');
 
-// Case E: Format filtering
+// Case 1.7: Format filtering
 const remoteJobs = filterJobs(scored, 'Remote', false, 'Worldwide', '');
 assert.strictEqual(remoteJobs.length, 2, 'Exactly 2 remote demo jobs should match format filter');
 console.log('  ✓ Format filtering matches exactly 2 Remote jobs');

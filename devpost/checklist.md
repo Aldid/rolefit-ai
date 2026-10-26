@@ -61,24 +61,25 @@ Build mode: fast
 
 ## Hands-on Checkpoints
 
-- [ ] Early usable behavior explored — Slice 2: Explainable 50/35/15 matching engine and ranked cards with best match auto-expand
-- [ ] Final kick-the-tires exploration and feedback completed — Slice 4: Full end-to-end application with upload, filters, recovery, and reset
+- [x] Early usable behavior explored — Slice 2: Explainable 50/35/15 matching engine and ranked cards with best match auto-expand
+- [x] Final kick-the-tires exploration and feedback completed — Slice 4: Full end-to-end application with upload, filters, recovery, and reset
 
 ## Final Review
 
-- [ ] Final review complete — feedback resolved and learner confirms ready to ship
+- [x] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [x] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
+- [x] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
+- [x] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
 
-Activity and evidence: [to be recorded upon completion]
-Route and stops: [to be recorded upon completion]
-Edit outcome: [to be recorded upon completion]
-Reflection: [to be recorded upon completion]
-Activity mode: [to be recorded upon completion]
+Activity and evidence: Focused technical walkthrough connecting deterministic 50/35/15 matching logic and in-memory parsing to explainability and privacy guarantees. Learner explicitly tested and approved the interface and flow ("в целом меня устраивает как сейчас выглядит").
+Route and stops: 4 key stops documented in app-map.html (Stop 1: src/app/api/parse-cv/route.ts, Stop 2: src/lib/matchingEngine.ts, Stop 3: src/components/JobCard.tsx, Stop 4: src/components/ApplicationAssistantModal.tsx).
+Edit outcome: UX refinements implemented across ResumeUploader (source & document type clarity) and ApplicationAssistantModal (editor scrolling, mobile viewport sizing, copy action accessibility).
+Reflection: Reusable practice documented — pure deterministic mathematical heuristics for trust, reproducible scores, and privacy-preserving AI architectures.
+Activity mode: Focused review and architectural app map.
 
 ## Revisions
+
 

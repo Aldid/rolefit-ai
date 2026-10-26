@@ -188,6 +188,30 @@ If the candidate has no relevant project, it transparently advises authoring a f
 
 ---
 
+## 📝 Demonstration Application Assistant & Extension Architecture
+
+RoleFit AI includes a clearly labeled **Application Assistant** demonstration experience (`DEMO MODE — NOT SUBMITTED`) demonstrating how candidates move from transparent match scoring to preparing targeted application materials:
+
+### What Is Implemented in the Current MVP
+- **Prepare Application Entry Point:** In each expanded job card, candidates can click **"Prepare Application"** to launch the preparation assistant.
+- **Grounded Cover Letter Draft:** Compiles an editable cover letter citing the candidate's real project (e.g. *"AI Customer Response & CRM Workflow Assistant"*), verified skills, and transparently acknowledging identified skill gaps without fabrication.
+- **Tailored Resume Bullets:** Suggests specific bullet wording adapted from the candidate's verified projects and matching adaptation advice.
+- **Interactive Preparation Checklist:** Tracks candidate readiness (reviewing skills, checking project links, confirming format alignment).
+- **Strict Demo Safety Invariant:** Prominently displays `DEMO MODE — NOT SUBMITTED`. The demo workflow **cannot report a successful submission** and direct automated submission is strictly disabled (`submitApplication` returns `success: false`).
+
+### Architectural Extension Points for Future Integrations
+The application establishes a clean, typed architectural contract ([`src/types/assistant.ts`](src/types/assistant.ts)) that decouples application preparation from future submission backends:
+1. **Application Preparation (`ApplicationPackage`):** Manages drafts, checklist, match breakdown, and candidate context in memory.
+2. **Platform Integration Contract (`JobPlatformAdapter`):** Defines operations for future official ATS connectors (Greenhouse, Lever) or job platforms:
+   - `checkAvailability(jobUrlOrId)`
+   - `prepareApplication(package)`
+   - `submitApplication(package)` *(Strictly disabled in demo mode)*
+   - `getApplicationStatus(applicationId)`
+3. **Browser Automation Extension:** A typed boundary reserved for future permitted, user-authorized browser assistants.
+4. **Submission Verification:** Ensures status transitions to `submitted` are strictly gated on verified third-party API confirmations, preventing fake or unconfirmed submissions.
+
+---
+
 ## 🌐 Target Hosting Environment & Platform Limits
 
 > [!IMPORTANT]
@@ -239,16 +263,17 @@ npm run dev
 Open **`http://localhost:3000`** in your browser.
 
 ### Running Test Suites
-RoleFit AI includes 4 automated test suites covering the core engine, extractor regex bounds, Slice 4 UI invariants, and streaming route safety:
+RoleFit AI includes 5 automated test suites covering the core engine, extractor regex bounds, Slice 4 UI invariants, streaming route safety, and the Application Assistant:
 ```bash
-# Run all 4 test suites
+# Run all 5 test suites
 npm test
 
 # Run individual suites:
-npm run test:engine   # Pure 50/35/15 math, bounds, sub-scores, and ranking
-npm run test:parser   # Skill extraction word boundaries (C++, C#, Go, REST APIs) and grounded projects
-npm run test:slice4   # Strict location filtering, empty filter state recovery, and session reset
-npm run test:api      # /api/parse-cv route: 5 MB boundaries, streaming cancel, and format validation
+npm run test:engine      # Pure 50/35/15 math, bounds, sub-scores, and ranking
+npm run test:parser      # Skill extraction word boundaries (C++, C#, Go, REST APIs) and grounded projects
+npm run test:slice4      # Strict location filtering, empty filter state recovery, and session reset
+npm run test:api         # /api/parse-cv route: 5 MB boundaries, streaming cancel, and format validation
+npm run test:assistant   # Application Assistant: grounded drafts, immutability, and submission guard
 ```
 
 All 4 test suites execute and pass against the current codebase.
@@ -302,9 +327,9 @@ npm run start
 ---
 
 ### Act 5: Edge-Case Handling & Session Privacy Wipe (1:40 – 2:05) [25s]
-* **Visual:** In the expanded Profile Review section, scroll to Target Location, type *"Tokyo"*, enable the strict location filter checkbox, and click **"Find Matches"**. The **Empty Results** card appears with the recovery button **"Show all 5 jobs"**. Click **"Show all 5 jobs"** to restore all 5 ranked vacancies. Finally, click **"New Session"** in the sticky top header.
+* **Visual:** In the expanded Profile Review section, scroll to Target Location, type *"Tokyo"*, check the **"Strict location filter"** checkbox, and click **"Find Matches"**. The list filters down to **2 of 5 Results**, demonstrating that strict location preserves both Remote vacancies (`Junior Python Integration Developer` and `Junior AI Automation Engineer`). Next, to demonstrate edge-case recovery when no vacancies match, type *"Tokyo"* into the separate **"Filter by city / title..."** input box. The **Empty Results** card appears (*"No Vacancies Match Your Search and Location Filters"*) with the recovery button **"Show all 5 jobs"**. Click **"Show all 5 jobs"** to restore all 5 ranked vacancies. Finally, click **"New Session"** in the sticky top header.
 * **Voiceover:**
-  > *"We also engineered graceful edge-case handling. When we open 'Edit Profile', enter a location like 'Tokyo', and enable the strict location filter, our Empty State suggests expanding the search and offers a 1-click 'Show all 5 jobs' recovery button that instantly restores the ranked listings.
+  > *"We also engineered graceful edge-case handling. When we set a strict location like 'Tokyo', our engine intelligently preserves our two Remote vacancies. Then, typing 'Tokyo' into the title and city search box reduces matches to zero, triggering our Empty Results screen. Clicking 'Show all 5 jobs' resets the filters and immediately restores all five vacancies.
   > And when you're done, clicking 'New Session' in the top header instantly purges all in-memory React state, returning the application to a pristine state."*
 
 ---

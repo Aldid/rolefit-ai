@@ -49,3 +49,6 @@ export interface ScoredJob {
   job: JobListing;
   breakdown: ScoreBreakdown;
 }
+
+export * from './assistant';
+

@@ -1,21 +1,23 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ScoredJob, CandidateProfile, WorkFormat } from '../types';
+import { ScoredJob, CandidateProfile } from '../types';
 import { JobCard } from './JobCard';
 import { EmptyResults } from './EmptyResults';
-import { Award, ArrowUpDown, Filter, RotateCcw } from 'lucide-react';
+import { ArrowUpDown, Filter, RotateCcw, Briefcase } from 'lucide-react';
 
 interface JobListProps {
   scoredJobs: ScoredJob[];
   candidateProfile?: CandidateProfile;
   onResetLocationFilter?: () => void;
+  onPrepareApplication?: (scoredJob: ScoredJob) => void;
 }
 
 export const JobList: React.FC<JobListProps> = ({
   scoredJobs,
   candidateProfile,
   onResetLocationFilter,
+  onPrepareApplication,
 }) => {
   const [selectedFormat, setSelectedFormat] = useState<string>('All');
   const [locationFilter, setLocationFilter] = useState<string>('');
@@ -92,12 +94,12 @@ export const JobList: React.FC<JobListProps> = ({
     selectedFormat !== 'All' || locationFilter.trim().length > 0 || isStrictLocation;
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-5 pt-1">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-200/80 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-2 border-b border-slate-200/80 gap-2">
         <div className="flex items-center gap-2">
-          <Award className="w-5 h-5 text-teal-600" />
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <Briefcase className="w-4 h-4 text-teal-800" />
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
             Ranked Vacancies ({filteredJobs.length} of {scoredJobs.length} Results)
           </h2>
         </div>
@@ -107,22 +109,22 @@ export const JobList: React.FC<JobListProps> = ({
         </div>
       </div>
 
-      {/* Filter bar: Format segmented buttons & location quick search */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
+      {/* Filter Toolbar: Inline, clean, non-boxed */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs py-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-semibold text-slate-700 flex items-center gap-1">
-            <Filter className="w-3.5 h-3.5 text-teal-600" />
-            Filter Format:
+            <Filter className="w-3.5 h-3.5 text-slate-400" />
+            Format:
           </span>
-          <div className="inline-flex rounded-lg bg-slate-100 p-0.5 border border-slate-200">
+          <div className="inline-flex rounded-md bg-slate-100 p-0.5 border border-slate-200">
             {['All', 'Remote', 'Hybrid', 'On-site'].map((fmt) => (
               <button
                 key={fmt}
                 type="button"
                 onClick={() => setSelectedFormat(fmt)}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
                   selectedFormat === fmt
-                    ? 'bg-white text-teal-700 font-semibold shadow-sm'
+                    ? 'bg-white text-slate-900 font-bold shadow-2xs border border-slate-200/90'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -138,32 +140,36 @@ export const JobList: React.FC<JobListProps> = ({
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
             placeholder="Filter by city / title..."
-            className="w-full md:w-56 px-3 py-1.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full md:w-56 px-3 py-1.5 rounded-md border border-slate-300 bg-white text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-teal-700 focus:border-teal-700 shadow-2xs transition-colors"
           />
 
           {hasActiveFilters && (
             <button
               type="button"
               onClick={handleResetAllFilters}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 shrink-0 font-medium transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-2xs shrink-0 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-teal-700"
               title="Reset all filters"
             >
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw className="w-3 h-3 text-slate-500" />
               <span>Reset</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* If 0 results after filtering: show EmptyResults */}
+      {/* If 0 results after filtering: show EmptyResults with explicit filter context */}
       {filteredJobs.length === 0 ? (
         <EmptyResults
-          currentLocation={locationFilter || candidateLocation || 'Current Filter'}
-          currentFormat={selectedFormat}
+          filterInfo={{
+            searchQuery: locationFilter.trim() || undefined,
+            selectedFormat: selectedFormat !== 'All' ? selectedFormat : undefined,
+            isStrictLocation,
+            candidateLocation: candidateLocation || undefined,
+          }}
           onResetFilters={handleResetAllFilters}
         />
       ) : (
-        /* Ranked job cards */
+        /* Ranked job cards container (MUST keep .space-y-4 for Playwright locator) */
         <div className="space-y-4">
           {filteredJobs.map((scoredJob, idx) => (
             <JobCard
@@ -172,6 +178,9 @@ export const JobList: React.FC<JobListProps> = ({
               rank={idx + 1}
               isExpanded={expandedId === scoredJob.job.id}
               onToggleExpand={() => handleToggle(scoredJob.job.id)}
+              onPrepareApplication={
+                onPrepareApplication ? () => onPrepareApplication(scoredJob) : undefined
+              }
             />
           ))}
         </div>
@@ -179,3 +188,5 @@ export const JobList: React.FC<JobListProps> = ({
     </div>
   );
 };
+
+

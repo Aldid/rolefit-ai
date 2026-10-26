@@ -1,62 +1,140 @@
 'use client';
 
 import React from 'react';
-import { SearchX, RotateCcw, MapPin, Sparkles } from 'lucide-react';
+import { SearchX, RotateCcw, MapPin } from 'lucide-react';
+
+export interface EmptyResultsFilterInfo {
+  searchQuery?: string;
+  selectedFormat?: string;
+  isStrictLocation?: boolean;
+  candidateLocation?: string;
+}
+
+/**
+ * Deterministically formats the empty state title and explanation based on active filters,
+ * ensuring no false claims that a strict location filter was responsible when triggered
+ * by manual search queries or format filters.
+ */
+export function formatEmptyResultsReason(info?: EmptyResultsFilterInfo): {
+  title: string;
+  description: string;
+} {
+  if (!info) {
+    return {
+      title: 'No Vacancies Match Your Filter Criteria',
+      description: 'No vacancies match your active filters. Try expanding your search or selecting different options.',
+    };
+  }
+
+  const hasSearch = Boolean(info.searchQuery && info.searchQuery.trim());
+  const hasFormat = Boolean(info.selectedFormat && info.selectedFormat !== 'All');
+  const hasStrictLoc = Boolean(info.isStrictLocation && info.candidateLocation && info.candidateLocation.trim());
+
+  // 1. Only text search query
+  if (hasSearch && !hasFormat && !hasStrictLoc) {
+    return {
+      title: 'No Vacancies Match Your Search Query',
+      description: `No vacancies match your search query "${info.searchQuery?.trim()}". Try clearing the search box or checking for typos.`,
+    };
+  }
+
+  // 2. Only work format filter
+  if (hasFormat && !hasSearch && !hasStrictLoc) {
+    return {
+      title: 'No Vacancies Match Your Work Format Filter',
+      description: `No vacancies match the selected "${info.selectedFormat}" work format. Try switching to "All" or "Remote".`,
+    };
+  }
+
+  // 3. Only strict location filter
+  if (hasStrictLoc && !hasSearch && !hasFormat) {
+    return {
+      title: 'No Vacancies Match Your Strict Location Filter',
+      description: `No vacancies match your strict location preference ("${info.candidateLocation}"). Note: Remote roles are preserved by this filter, but none matched this criteria.`,
+    };
+  }
+
+  // 4. Combined: search query + strict location
+  if (hasSearch && hasStrictLoc && !hasFormat) {
+    return {
+      title: 'No Vacancies Match Your Search and Location Filters',
+      description: `No vacancies match your search query "${info.searchQuery?.trim()}". Note: Strict location for "${info.candidateLocation}" preserved Remote vacancies, but they do not match your text search.`,
+    };
+  }
+
+  // 5. Combined: strict location + format filter
+  if (hasStrictLoc && hasFormat && !hasSearch) {
+    return {
+      title: 'No Vacancies Match Your Location & Format Combination',
+      description: `No vacancies match your strict location ("${info.candidateLocation}") combined with the "${info.selectedFormat}" format filter. (Remote vacancies are preserved by your location filter, but excluded by the "${info.selectedFormat}" format filter).`,
+    };
+  }
+
+  // 6. Combined: search query + format filter
+  if (hasSearch && hasFormat && !hasStrictLoc) {
+    return {
+      title: 'No Vacancies Match Your Filter Criteria',
+      description: `No vacancies match search query "${info.searchQuery?.trim()}" with the "${info.selectedFormat}" work format filter.`,
+    };
+  }
+
+  // 7. Combined: all three active
+  if (hasSearch && hasFormat && hasStrictLoc) {
+    return {
+      title: 'No Vacancies Match Your Combined Filters',
+      description: `No vacancies match search query "${info.searchQuery?.trim()}", format "${info.selectedFormat}", and strict location "${info.candidateLocation}".`,
+    };
+  }
+
+  return {
+    title: 'No Vacancies Match Your Filter Criteria',
+    description: 'No vacancies match your current filter settings. Try expanding your search or resetting all filters.',
+  };
+}
 
 interface EmptyResultsProps {
-  currentLocation?: string;
-  currentFormat?: string;
+  filterInfo?: EmptyResultsFilterInfo;
   onResetFilters: () => void;
 }
 
 export const EmptyResults: React.FC<EmptyResultsProps> = ({
-  currentLocation,
-  currentFormat,
+  filterInfo,
   onResetFilters,
 }) => {
+  const { title, description } = formatEmptyResultsReason(filterInfo);
+
   return (
-    <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-8 sm:p-12 text-center space-y-6">
-      <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-sm">
-        <SearchX className="w-8 h-8" />
+    <div className="w-full bg-white rounded-lg border border-slate-200/90 shadow-2xs p-8 sm:p-10 text-center space-y-4">
+      <div className="w-10 h-10 mx-auto rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500">
+        <SearchX className="w-5 h-5" />
       </div>
 
-      <div className="max-w-md mx-auto space-y-2">
-        <h3 className="text-lg font-bold text-slate-900">
-          No Vacancies Match Your Strict Filter
+      <div className="max-w-md mx-auto space-y-1">
+        <h3 className="text-base font-bold text-slate-900 tracking-tight">
+          {title}
         </h3>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          No vacancies match your strict location filter
-          {currentLocation ? (
-            <>
-              {' '}
-              (<strong className="text-slate-800">{currentLocation}</strong>)
-            </>
-          ) : null}
-          {currentFormat && currentFormat !== 'Any' ? (
-            <>
-              {' '}
-              with <strong className="text-slate-800">{currentFormat}</strong> format
-            </>
-          ) : null}
-          . Try expanding your location or switching to Remote.
+        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          {description}
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+      <div className="pt-1">
         <button
           type="button"
           onClick={onResetFilters}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white text-sm font-semibold shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-teal-800 hover:bg-teal-900 active:bg-teal-950 text-white text-xs font-semibold shadow-2xs transition-all focus:outline-none focus:ring-2 focus:ring-teal-700"
         >
-          <Sparkles className="w-4 h-4 fill-white" />
+          <RotateCcw className="w-3.5 h-3.5" />
           <span>Show all 5 jobs</span>
         </button>
       </div>
 
-      <div className="pt-4 border-t border-slate-100 max-w-sm mx-auto flex items-center justify-center gap-2 text-xs text-slate-400">
+      <div className="pt-2 border-t border-slate-100 max-w-sm mx-auto flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
         <MapPin className="w-3.5 h-3.5 text-slate-400" />
-        <span>Resets location restrictions and reveals all scored demo vacancies</span>
+        <span>Clears active search filters and restores all 5 scored vacancies</span>
       </div>
     </div>
   );
 };
+
+

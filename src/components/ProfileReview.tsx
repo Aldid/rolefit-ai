@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { CandidateProfile, WorkFormat } from '../types';
-import { Plus, X, Search, Briefcase, MapPin, Laptop, Layers } from 'lucide-react';
+import { Plus, X, Search, Briefcase, MapPin, Laptop, Layers, Loader2 } from 'lucide-react';
 
 interface ProfileReviewProps {
   profile: CandidateProfile;
@@ -51,34 +51,37 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
+    <div className="w-full space-y-6 pt-2">
+      {/* Step Header */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-3 border-b border-slate-200/80 gap-2">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-600 inline-block" />
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-teal-800 mb-0.5">
+            Step 1 of 2 • Review & Calibration
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             Candidate Profile & Preferences
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Review detected skills and calibrate your target role and location before running the match engine.
+          <p className="text-xs text-slate-500 mt-1">
+            Review your detected technical skills and calibrate job search criteria before matching.
           </p>
         </div>
-        <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md border border-slate-200 self-start sm:self-auto">
-          {profile.skills.length} Skills Identified
+        <span className="text-xs font-semibold px-2.5 py-1 bg-white text-slate-700 rounded-md border border-slate-200 shadow-2xs self-start sm:self-auto shrink-0">
+          {profile.skills.length} Skills Verified
         </span>
       </div>
 
-      {/* Preferences grid: Role, Format, Location */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {/* Preferences Section: Clean, structured horizontal layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 p-5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
         {/* Target Role */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-            <Briefcase className="w-3.5 h-3.5 text-teal-600" />
+            <Briefcase className="w-3.5 h-3.5 text-slate-400" />
             Target Role
           </label>
           <select
             value={profile.targetRole}
             onChange={(e) => onUpdateProfile({ ...profile, targetRole: e.target.value })}
-            className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium"
+            className="w-full text-xs sm:text-sm bg-slate-50 hover:bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:border-teal-700 font-medium transition-colors"
           >
             {targetRoles.map((role) => (
               <option key={role} value={role}>
@@ -91,10 +94,10 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
         {/* Work Format */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-            <Laptop className="w-3.5 h-3.5 text-teal-600" />
+            <Laptop className="w-3.5 h-3.5 text-slate-400" />
             Work Format Preference (10 pts)
           </label>
-          <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200">
+          <div className="grid grid-cols-4 gap-1 p-0.5 bg-slate-100 rounded-md border border-slate-200">
             {workFormats.map((format) => (
               <button
                 key={format}
@@ -102,7 +105,7 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
                 onClick={() => onUpdateProfile({ ...profile, preferredFormat: format })}
                 className={`py-1.5 text-xs font-medium rounded transition-all text-center ${
                   profile.preferredFormat === format
-                    ? 'bg-white text-teal-700 font-semibold shadow-sm'
+                    ? 'bg-white text-slate-900 font-bold shadow-2xs border border-slate-200/90'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -115,7 +118,7 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
         {/* Location Preference */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-teal-600" />
+            <MapPin className="w-3.5 h-3.5 text-slate-400" />
             Target Location (5 pts)
           </label>
           <input
@@ -123,21 +126,22 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
             value={profile.preferredLocation}
             onChange={(e) => onUpdateProfile({ ...profile, preferredLocation: e.target.value })}
             placeholder="e.g. Worldwide, London, Remote"
-            className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full text-xs sm:text-sm bg-slate-50 hover:bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:border-teal-700 transition-colors"
           />
-          <div className="flex flex-wrap gap-1 mt-1">
+          <div className="flex flex-wrap items-center gap-1 pt-0.5">
+            <span className="text-[10px] text-slate-400 mr-0.5">Presets:</span>
             {locationPresets.map((loc) => (
               <button
                 key={loc}
                 type="button"
                 onClick={() => onUpdateProfile({ ...profile, preferredLocation: loc })}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 transition-colors"
               >
                 {loc}
               </button>
             ))}
           </div>
-          <div className="pt-1.5">
+          <div className="pt-1">
             <label className="inline-flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -145,7 +149,7 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
                 onChange={(e) =>
                   onUpdateProfile({ ...profile, strictLocationFilter: e.target.checked })
                 }
-                className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 w-3.5 h-3.5"
+                className="rounded border-slate-300 text-teal-800 focus:ring-teal-700 w-3.5 h-3.5"
               />
               <span className="font-medium text-slate-700">Strict location filter</span>
             </label>
@@ -153,30 +157,31 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
         </div>
       </div>
 
-      {/* Skills tag editor */}
-      <div className="space-y-2">
-        <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-          <span className="flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-teal-600" />
+      {/* Verified Skills Section */}
+      <div className="space-y-2.5 p-5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <label className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-teal-800" />
             Verified Technical Skills (50% Match Weight)
+          </label>
+          <span className="text-[11px] text-slate-400">
+            Click × on any skill to remove, or append missing skills below
           </span>
-          <span className="text-[11px] font-normal text-slate-500">
-            Click × to remove or add custom skills below
-          </span>
-        </label>
+        </div>
 
-        <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-slate-50/70 border border-slate-200 min-h-[50px] items-center">
+        <div className="flex flex-wrap gap-1.5 py-1 min-h-[44px] items-center">
           {profile.skills.map((skill) => (
             <span
               key={skill}
-              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-white text-slate-800 border border-slate-200 shadow-2xs hover:border-slate-300 transition-colors"
+              className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md bg-slate-50 text-slate-800 border border-slate-200 hover:border-slate-300 transition-colors"
             >
               <span>{skill}</span>
               <button
                 type="button"
                 onClick={() => handleRemoveSkill(skill)}
-                className="text-slate-400 hover:text-rose-600 rounded-full p-0.5 transition-colors"
+                className="text-slate-400 hover:text-rose-600 rounded p-0.5 transition-colors focus:outline-none focus:text-rose-600"
                 title={`Remove ${skill}`}
+                aria-label={`Remove ${skill}`}
               >
                 <X className="w-3 h-3" />
               </button>
@@ -188,17 +193,17 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
           )}
         </div>
 
-        <form onSubmit={handleAddSkill} className="flex gap-2 max-w-sm">
+        <form onSubmit={handleAddSkill} className="flex gap-2 max-w-sm pt-1">
           <input
             type="text"
             value={newSkill}
             onChange={(e) => setNewSkill(e.target.value)}
             placeholder="Add missing skill (e.g. Docker, SQL)"
-            className="flex-1 text-xs bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="flex-1 text-xs bg-slate-50 hover:bg-white border border-slate-300 rounded-md px-3 py-1.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:border-teal-700 transition-colors"
           />
           <button
             type="submit"
-            className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-800 rounded-md border border-slate-300 shadow-2xs transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add</span>
@@ -206,20 +211,26 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
         </form>
       </div>
 
-      {/* Projects summary */}
+      {/* Projects Reference Section */}
       {profile.projects && profile.projects.length > 0 && (
-        <div className="space-y-2 pt-2 border-t border-slate-100">
-          <label className="text-xs font-semibold text-slate-700">
-            Documented Projects ({profile.projects.length}) — Relevant Experience Weight (35%)
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="space-y-2.5 p-5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold text-slate-900">
+              Documented Projects ({profile.projects.length}) — Relevant Experience Weight (35%)
+            </span>
+            <span className="text-[11px] text-slate-400">Extracted from resume experience</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             {profile.projects.map((proj, idx) => (
-              <div key={idx} className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-                <div className="font-semibold text-slate-900 mb-1">{proj.title}</div>
-                <p className="text-slate-600 line-clamp-2 text-[11px] leading-relaxed mb-2">
-                  {proj.description}
-                </p>
-                <div className="flex flex-wrap gap-1">
+              <div key={idx} className="p-3 rounded-lg bg-slate-50/70 border border-slate-200/80 text-xs flex flex-col justify-between">
+                <div>
+                  <div className="font-semibold text-slate-900 mb-1 leading-snug">{proj.title}</div>
+                  <p className="text-slate-600 line-clamp-2 text-[11px] leading-relaxed mb-2">
+                    {proj.description}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1 pt-1.5 border-t border-slate-200/60">
                   {proj.technologies.slice(0, 3).map((t) => (
                     <span
                       key={t}
@@ -229,7 +240,7 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
                     </span>
                   ))}
                   {proj.technologies.length > 3 && (
-                    <span className="text-[10px] text-slate-400">+{proj.technologies.length - 3}</span>
+                    <span className="text-[10px] text-slate-400 font-medium">+{proj.technologies.length - 3}</span>
                   )}
                 </div>
               </div>
@@ -239,15 +250,15 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
       )}
 
       {/* Action Button: Find Matches */}
-      <div className="pt-3">
+      <div className="pt-2">
         <button
           onClick={onFindMatches}
           disabled={isSearching}
-          className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white text-base font-semibold shadow-md shadow-teal-600/20 transition-all disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-lg bg-teal-800 hover:bg-teal-900 active:bg-teal-950 text-white text-sm font-semibold shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2"
         >
           {isSearching ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <Loader2 className="w-4 h-4 text-white animate-spin shrink-0" />
               <span>Calculating 50/35/15 Mathematical Match...</span>
             </>
           ) : (
@@ -261,3 +272,5 @@ export const ProfileReview: React.FC<ProfileReviewProps> = ({
     </div>
   );
 };
+
+
